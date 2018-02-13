@@ -147,12 +147,14 @@ class Game:
             return False
 
     def play(self, verbose=False):
-        if verbose == True:
+        if verbose:
             logger.info('GAME START')
             logger.info('The game is being played on Artemia Board {}'
                         .format(self.artemia))
 
-        while self.counter['turn'] < 20:
+        while self.counter['turn'] < 20:  # temporary failsafe to prevent infinite loops, an ordinary game has theoretical a maximum of 20 turns in normal cases
+
+            # start of turn clean-up steps
             self.counter['turn'] += 1
             self.beach_proced_in_turn = False
             self.wreck_proced_in_turn = False
@@ -161,63 +163,66 @@ class Game:
             self.hunt_card_target2 = False
             self.hunt_card_played = []  # need to make sure when a hunt card is played, add the name of the hunt card to this
             self.anticipation_target = None
-
-            logger.info('The Creature is {} {} from winning. '
-                        'The Hunted are {} {} from winning.'
-                        .format(self.creature_spaces_to_win,
-                                'space' if self.creature_spaces_to_win == 1
-                                else 'spaces',
-                                self.hunted_spaces_to_win,
-                                'space' if self.hunted_spaces_to_win == 1
-                                else 'spaces'))
-
             self.c_token.place = self.creature
             self.a_token.place = self.creature
             self.t_token.place = self.creature
 
             # PHASE 1
-            if verbose == True:
+            if verbose:
                 logger.info('\nTurn {}'.format(self.counter['turn']))
+                logger.info('The Creature is {} space{} from winning. '
+                            'The Hunted are {} space{} from winning.'
+                            .format(self.creature_spaces_to_win,
+                                    's' if self.creature_spaces_to_win != 1 else '',
+                                    self.hunted_spaces_to_win,
+                                    's' if self.hunted_spaces_to_win != 1 else ''))
                 logger.info('Phase 1')
+
+            # hunted decide if they give up, then resist, then they play a card
             for hunted in self.hunted:
                 if hunted.mind.decide_if_give_up():
-                    hunted.give_up(verbose=True)
+                    hunted.give_up(verbose=verbose)
                 if hunted.mind.decide_if_resist():
                     hunted.resist(hunted.mind.decide_if_resist(), verbose=True)
-                if hunted.river_turn == True:
-                    if verbose == True:
+                hunted.play_card(verbose=verbose)
+
+                # hunted play an extra card if they played river or artefact in the previous turn
+                if hunted.river_turn:
+                    hunted.play_card(verbose=verbose)
+                    if verbose:
                         logger.info('{} played two cards because of The River.'
                                     .format(hunted.name))
-                    hunted.play_card(verbose=True if verbose == True else False)
-                if hunted.artefact_turn == True:
-                    if verbose == True:
-                        logger.info('{} played two cards because of The Artefact.'
-                                    .format(hunted.name))
-                    hunted.play_card(verbose=True if verbose == True else False)
-                hunted.play_card(verbose=True if verbose == True else False)
+                if hunted.artefact_turn:
+                    hunted.play_card(verbose=verbose)
+                    if verbose:
+                        logger.info('{} played two cards because of The Artefact.'.format(hunted.name))
+
             if self.game_over():
                 break
 
             # PHASE 2
-            if verbose == True:
+            if verbose:
                 logger.info('Phase 2')
+
             self.creature.place_token(self.c_token, verbose=verbose)
 
-            if self.hunted_spaces_to_win in Game.ARTEMIA_SPACES[self.artemia] or self.hunt_card_artemia:
+            # Creature places the artemia token if the Hunted are a certain number of spaces from victory, or if the Creature played a Hunt card with an artemia icon
+            if (self.hunted_spaces_to_win in Game.ARTEMIA_SPACES[self.artemia]) or self.hunt_card_artemia:
                 self.creature.place_token(self.a_token, verbose=verbose)
 
+            # Creature places the target token if they played a Hunt card with an target icon
             if self.hunt_card_target:
                 self.creature.place_token(self.t_token, verbose=verbose)
 
             for hunted in self.hunted:
-                if hunted.river_turn == True:
+                if hunted.river_turn:
                     hunted.river_turn = False
                     if len(hunted.played) == 2:
-                        hunted.return_card_to_hand(hunted.mind.choose_card_to_return(),
-                                                   verbose=verbose)
+                        hunted.return_card_to_hand(hunted.mind.choose_card_to_return(), verbose=verbose)
+                        # TO DO: mind should return a card if it has a creature, artemia or target token on it and the other card does not
 
             # PHASE 3
-            if verbose == True:
+            if verbose:
                 logger.info('Phase 3')
 
             caught_at_least_one = False
@@ -227,7 +232,7 @@ class Game:
                         self.counter['creature catch'] += 1
                         if played.name == 'The Lair':
                             hunted.will -= 2
-                            if verbose == True:
+                            if verbose:
                                 logger.info('{} was caught by the Creature at'
                                             ' The Lair and lost 2 will'
                                             .format(hunted.name))
@@ -243,13 +248,13 @@ class Game:
                     elif played.name == self.a_token.place.name:
                         self.counter['artemia catch'] += 1
                         if hunted.phand == []:
-                            if verbose == True:
+                            if verbose:
                                 logger.info('{} visited {} but it had the '
                                             'Artemia token on it and they had no cards in hand.'
                                             .format(hunted.name, played.name))
                         else:
                             hunted.discard_pcard(hunted.mind.choose_card_to_discard())
-                            if verbose == True:
+                            if verbose:
                                 logger.info('{} visited {} but it had the '
                                             'Artemia token on it, so they discarded a card'
                                             .format(hunted.name, played.name))
@@ -260,12 +265,13 @@ class Game:
                         # to add option of taking back one place from discard
                     if self.game_over():
                         break
-
+                if self.game_over():
+                    break
             if self.game_over():
                 break
 
             # PHASE 4
-            if verbose == True:
+            if verbose:
                 logger.info('Phase 4')
                 logger.info('The Hunted are now one step closer to escape')
             self.hunted_spaces_to_win -= 1
@@ -361,7 +367,7 @@ class Hunted:
         self.will -= will_lost
         for i in range(will_lost * 2):
             self.take_back(self.mind.card_to_take_back())  # placeholder to be based on Hunted.mind
-        if verbose == True:
+        if verbose:
             logger.info('{} resisted, losing {} will and taking back {} cards'
                         .format(self.name, will_lost, will_lost * 2))
 
@@ -371,38 +377,38 @@ class Hunted:
             self.phand.append(card)
         self.discard = []
         self.game.creature_spaces_to_win -= 1
-        if verbose == True:
+        if verbose:
             logger.info('{} gave up, taking back all cards and will and '
                         'pushing the Creature one step to victory'
                         .format(self.name))
 
     def play_card(self, verbose=False):
         if self.phand == []:
-            if verbose == True:
+            if verbose:
                 logger.info('{} tried to play a card but had no cards in hand'
                             .format(self.name))
         else:
             card = self.mind.choose_card_to_play()
             self.phand.remove(card)
             self.played.append(card)
-            if verbose == True:
+            if verbose:
                 logger.info('{} played {} facedown'.format(self.name,
                                                            card.name))
 
     def take_back(self, card, verbose=False):
         if card == None:
-            if verbose == True:
+            if verbose:
                 logger.info('{} had no cards to take back'.format(self.name))
                 return None
         self.discard.remove(card)
         self.phand.append(card)
-        if verbose == True:
+        if verbose:
             logger.info('{} takes back {}'.format(self.name, card.name))
 
     def take_from_reserve(self, card, verbose=False):
         self.phand.append(card)
         self.game.reserve.remove(card)
-        if verbose == True:
+        if verbose:
             logger.info('{} takes {} from the reserve'.format(self.name,
                                                               card.name))
 
@@ -418,7 +424,7 @@ class Hunted:
     def return_card_to_hand(self, card, verbose=False):
         self.phand.append(card)
         self.played.remove(card)
-        if verbose == True:
+        if verbose:
             logger.info('{} returned {} to their hand.'.format(self.name,
                                                                card.name))
 
@@ -444,34 +450,34 @@ class Hunted:
             self.river_turn = True
 
         def beach():
-            if self.game.beach_proced_in_turn == False:
+            if not self.game.beach_proced_in_turn:
                 self.game.beach_proced_in_turn = True
-                if self.game.beach_marker_on == False:
+                if not self.game.beach_marker_on:
                     self.game.beach_marker_on = True
-                    if verbose == True:
+                    if verbose:
                         logger.info('{} put the Marker counter on the Beach'
                                     .format(self.name))
                 else:
                     self.game.beach_marker_on = False
                     self.game.hunted_spaces_to_win -= 1
-                    if verbose == True:
+                    if verbose:
                         logger.info('{} removed the Marker counter from the '
                                     'Beach, moving the Rescue counter forward 1 space'
                                     .format(self.name))
-            if verbose == True:
+            if verbose:
                 logger.info('{} visited the Beach but it was'
                             ' already activated this turn'.format(self.name))
 
         def rover():
             card = self.mind.choose_card_from_reserve()
-            if card == None:
-                if verbose == True:
+            if not card:
+                if verbose:
                     logger.info('{} tried to explore with the Rover but no '
                                 'places were left to explore.'
                                 .format(self.name))
             else:
                 self.take_from_reserve(card, verbose=verbose)
-                if verbose == True:
+                if verbose:
                     logger.info('{} discovered {} using The Rover.'
                                 .format(self.name, card.name))
 
@@ -491,7 +497,7 @@ class Hunted:
                 card_to_draw, card_to_discard = self.mind.choose_survival_card_at_shelter(cards)
                 self.shand.append(card_to_draw)
                 self.game.survival_discard.append(card_to_discard)
-                if verbose == True:
+                if verbose:
                     logger.info('{} visited the Shelter, choosing {} over {}'
                                 .format(self.name, card_to_draw.name,
                                         card_to_discard.name))
@@ -499,28 +505,28 @@ class Hunted:
                 pass
 
         def wreck():
-            if self.game.wreck_proced_in_turn == False:
+            if not self.game.wreck_proced_in_turn:
                 self.game.wreck_proced_in_turn = True
                 self.game.hunted_spaces_to_win -= 1
-                if verbose == True:
+                if verbose:
                     logger.info('{} visited the Wreck, moving the Rescue '
                                 'counter forward 1 space'
                                 .format(self.name))
             else:
-                if verbose == True:
+                if verbose:
                     logger.info('{} visited the Wreck but it was already '
                                 'activated this turn'.format(self.name))
 
         def source():
-            if self.mind.source_choose_will() == True:
+            if self.mind.source_choose_will():
                 benefactor = self.mind.player_to_gain_will()
                 benefactor.will += 1
-                if verbose == True:
+                if verbose:
                     logger.info('{} visited the Source and chose {} to gain 1 will'
                                 .format(self.name, benefactor.name))
             else:
                 self.draw_survival()
-                if verbose == True:
+                if verbose:
                     logger.info('{} visited the Source and chose to draw a Survival card'
                                 .format(self.name))
 
@@ -562,7 +568,7 @@ class Creature:
             if place_card.name == chosen_place_name:
                 place_card.tokens.append(token)
                 token.place = place_card
-                if verbose == True:
+                if verbose:
                     logger.info('{} puts the {} token on {}'.format(self.name,
                                                                     token.name,
                                                                     place_card.name))
@@ -719,7 +725,7 @@ class RandomMind:
         return random.choice(self.player.phand)
 
     def choose_take_back(self):
-        if self.player.discard == []:
+        if not self.player.discard:
             return None
         else:
             return random.choice(self.player.discard)
@@ -736,13 +742,13 @@ class RandomMind:
         return random.choice(place_option)
 
     def decide_if_give_up(self):
-        if self.player.will == 1 and self.player.phand == []:
+        if self.player.will == 1 and not self.player.phand:
             return True
         else:
             return False
 
     def decide_if_resist(self):
-        if self.player.phand == []:
+        if not self.player.phand:
             return 1
         else:
             return False
@@ -757,7 +763,7 @@ class RandomMind:
             return 'Proc Creature Place'
 
     def choose_card_from_reserve(self):
-        if self.player.game.reserve == []:
+        if not self.player.game.reserve:
             return None
         return random.choice(self.player.game.reserve)
 
@@ -794,13 +800,6 @@ class RandomMind:
                       if len(hunted.phand) > 2]
         return random.choice(candidates)
 
-
-# player_names = []
-# with open('player_names.csv', 'r', newline='') as f:
-#     reader = csv.reader(f)
-#     for row in reader:
-#         player_names.append(row[0])
-#     del player_names[0]  # remove the column header
 
 hunt_cards = {}
 survival_cards = {}
