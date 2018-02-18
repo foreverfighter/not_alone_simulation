@@ -1,0 +1,5 @@
+i noticed that my results file had abnormal figures, and games which had 20 turns, but it was difficult to track down the full log of the game.
+
+how to win in not alone as the creature
+how to win in not alone as the hunted
+

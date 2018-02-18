@@ -23,9 +23,17 @@ file_handler = logging.FileHandler('games.log')
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 
-# logger 2, for logging to the console
+# logger 2, for logging errors to the console
+error_logger = logging.getLogger('x')
+error_logger.setLevel(logging.WARNING)
+
 stream_handler = logging.StreamHandler()
-logger.addHandler(stream_handler)
+error_logger.addHandler(stream_handler)
+
+
+def move(item, origin, dest):
+    origin.remove(item)
+    dest.append(item)
 
 
 class Game:
@@ -153,7 +161,6 @@ class Game:
                         .format(self.artemia))
 
         while self.counter['turn'] < 20:  # temporary failsafe to prevent infinite loops, an ordinary game has theoretical a maximum of 20 turns in normal cases
-
             # start of turn clean-up steps
             self.counter['turn'] += 1
             self.beach_proced_in_turn = False
@@ -222,15 +229,18 @@ class Game:
                         # TO DO: mind should return a card if it has a creature, artemia or target token on it and the other card does not
 
             # PHASE 3
+            caught_at_least_one = False
+
             if verbose:
                 logger.info('Phase 3')
 
-            caught_at_least_one = False
+            # for every place card played by every hunted player, check that it's not blocked by a token, and then proc the place card.
             for hunted in self.hunted:
                 for played in hunted.played:
                     if played.name == self.c_token.place.name:
                         self.counter['creature catch'] += 1
                         if played.name == 'The Lair':
+                            self.counter['lair catch'] += 1
                             hunted.will -= 2
                             if verbose:
                                 logger.info('{} was caught by the Creature at'
@@ -247,7 +257,7 @@ class Game:
                             caught_at_least_one = True
                     elif played.name == self.a_token.place.name:
                         self.counter['artemia catch'] += 1
-                        if hunted.phand == []:
+                        if not hunted.phand:
                             if verbose:
                                 logger.info('{} visited {} but it had the '
                                             'Artemia token on it and they had no cards in hand.'
@@ -259,7 +269,7 @@ class Game:
                                             'Artemia token on it, so they discarded a card'
                                             .format(hunted.name, played.name))
                     elif played.name == self.t_token.place.name:
-                        pass
+                        pass  # to insert code here for target token effects
                     else:
                         hunted.proc(played.name, verbose=verbose)
                         # to add option of taking back one place from discard
@@ -278,19 +288,24 @@ class Game:
             if self.game_over():
                 break
 
-            # move played cards into discard pile
+            # move played cards into discard piles
             for hunted in self.hunted:
                 for played in hunted.played:
                     hunted.discard.append(played)
                     hunted.played.remove(played)
 
+        # game end subroutine
         logger.info('The game is over')
+        if self.creature_spaces_to_win < 1 and self.hunted_spaces_to_win < 1:
+            logger.warning('Somehow, both teams won at the same time')
+
         if self.creature_spaces_to_win < 1:
             winner = 'Creature'
             logger.info('The Creature won')
         elif self.hunted_spaces_to_win < 1:
             winner = 'Hunted'
             logger.info('The Hunted won')
+
         with open('games.csv', 'a', newline='') as csvfile:
             fieldnames = ['ARTEMIA_BOARD',
                           'PLAYERS',
@@ -310,7 +325,8 @@ class Game:
                           'ARTEFACT',
                           'CREATURE_CATCH',
                           'ARTEMIA_CATCH',
-                          'ADVANCES_FROM_CATCH']
+                          'ADVANCES_FROM_CATCH',
+                          'LAIR_CATCH']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writerow({'ARTEMIA_BOARD': self.artemia,
                              'PLAYERS': len(self.hunted) + 1,
@@ -330,7 +346,8 @@ class Game:
                              'ARTEFACT': self.counter['The Artefact'],
                              'CREATURE_CATCH': self.counter['creature catch'],
                              'ARTEMIA_CATCH': self.counter['artemia catch'],
-                             'ADVANCES_FROM_CATCH': self.counter['advances from catch']
+                             'ADVANCES_FROM_CATCH': self.counter['advances from catch'],
+                             'LAIR_CATCH': self.counter['lair catch']
                              })
 
 
@@ -348,17 +365,18 @@ class Token:
 class Hunted:
     """A Hunted player."""
 
-    def __init__(self, name, game):
+    def __init__(self, name, game, mind=None):
         self.name = name
         self.will = 3
         self.shand = []
         self.phand = []
         self.discard = []
         self.played = []
-        self.mind = RandomMind(self)
         self.game = game
         self.river_turn = False
         self.artefact_turn = False
+        if not mind:
+            self.mind = RandomMind(self)
 
     def __repr__(self):
         return '{}({})'.format(self.name, self.mind)
@@ -366,7 +384,7 @@ class Hunted:
     def resist(self, will_lost, verbose=False):
         self.will -= will_lost
         for i in range(will_lost * 2):
-            self.take_back(self.mind.card_to_take_back())  # placeholder to be based on Hunted.mind
+            self.take_back(self.mind.card_to_take_back())
         if verbose:
             logger.info('{} resisted, losing {} will and taking back {} cards'
                         .format(self.name, will_lost, will_lost * 2))
@@ -383,47 +401,39 @@ class Hunted:
                         .format(self.name))
 
     def play_card(self, verbose=False):
-        if self.phand == []:
-            if verbose:
-                logger.info('{} tried to play a card but had no cards in hand'
-                            .format(self.name))
+        if not self.phand and verbose:
+            logger.warning('{} tried to play a card but had no cards in hand'
+                           .format(self.name))
         else:
             card = self.mind.choose_card_to_play()
-            self.phand.remove(card)
-            self.played.append(card)
+            move(card, self.phand, self.played)
             if verbose:
                 logger.info('{} played {} facedown'.format(self.name,
                                                            card.name))
 
     def take_back(self, card, verbose=False):
-        if card == None:
+        if not card and verbose:
+            logger.info('{} had no cards to take back'.format(self.name))
+        else:
+            move(card, self.discard, self.phand)
             if verbose:
-                logger.info('{} had no cards to take back'.format(self.name))
-                return None
-        self.discard.remove(card)
-        self.phand.append(card)
-        if verbose:
-            logger.info('{} takes back {}'.format(self.name, card.name))
+                logger.info('{} takes back {}'.format(self.name, card.name))
 
     def take_from_reserve(self, card, verbose=False):
-        self.phand.append(card)
-        self.game.reserve.remove(card)
+        move(card, self.game.reserve, self.phand)
         if verbose:
             logger.info('{} takes {} from the reserve'.format(self.name,
                                                               card.name))
 
     def discard_pcard(self, card):
-        self.phand.remove(card)
-        self.discard.append(card)
+        move(card, self.phand, self.discard)
 
     def draw_survival(self):
         card = random.choice(self.game.survival_deck)
-        self.game.survival_deck.remove(card)
-        self.shand.append(card)
+        move(card, self.game.survival_deck, self.shand)
 
     def return_card_to_hand(self, card, verbose=False):
-        self.phand.append(card)
-        self.played.remove(card)
+        move(card, self.played, self.phand)
         if verbose:
             logger.info('{} returned {} to their hand.'.format(self.name,
                                                                card.name))
