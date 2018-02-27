@@ -1,7 +1,6 @@
 #!/usr/bin/env
 
 # To do
-# Add docstrings
 # Add hunt card effects
 # Add survival card effects
 # Add smarter methods for better minds
@@ -11,6 +10,7 @@
 # Add simple correlation place procs and win, and huntsurv card proc and win
 # Plan and finish the slides
 # For different minds, add docstring on reason for behavior
+
 """This script runs simulations of the board game Not Alone
 and logs the game stats in a "games.csv" for analysis.
 Verbose game logs are saved in "games.log".
