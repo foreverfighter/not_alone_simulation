@@ -1,15 +1,15 @@
 #!/usr/bin/env
 
 # To do
+# Add docstrings
 # Add hunt card effects
 # Add survival card effects
 # Add smarter methods for better minds
 # Add bokeh data viz win rates for different player counts, minds
+# Run script for 10k games on each player setting and each permutation of minds
 # Do simple pandas csv manip to calc win rates
-# Add docstrings
 # Add simple correlation place procs and win, and huntsurv card proc and win
 # Plan and finish the slides
-# Cover main script in if __name__ = ""main""
 # For different minds, add docstring on reason for behavior
 """This script runs simulations of the board game Not Alone
 and logs the game stats in a "games.csv" for analysis.
@@ -168,12 +168,17 @@ class Game:
         self.counter['turn'] = 0
 
     def game_over(self):
+        """Returns True if game is over"""
         if (self.creature_spaces_to_win < 1) or (self.hunted_spaces_to_win < 1):
             return True
         else:
             return False
 
     def play(self, verbose=False):
+        """Plays a game, logging errors to screen and saving stats to games.csv.
+
+        If verbose, saves full logs to games.log, for debugging or otherwise
+        """
         if verbose:
             logger.info('GAME {} START'.format(self.game_number))
             logger.info('The game is being played on Artemia Board {}'
@@ -401,12 +406,13 @@ class Hunted:
         self.river_turn = False
         self.artefact_turn = False
         if not mind:
-            self.mind = RandomMind(self)
+            self.mind = RandomHuntedMind(self)
 
     def __repr__(self):
         return '{}({})'.format(self.name, self.mind)
 
     def resist(self, will_lost, verbose=False):
+        """In phase 1, lose x will to take back 2x cards"""
         self.will -= will_lost
         for i in range(will_lost * 2):
             self.take_back(self.mind.card_to_take_back())
@@ -415,6 +421,7 @@ class Hunted:
                         .format(self.name, will_lost, will_lost * 2))
 
     def give_up(self, verbose=False):
+        """In phase 1, lose all will, take back all cards and advance creature 1 space"""
         self.will = 3
         for card in self.discard:
             move(card, self.discard, self.phand)
@@ -425,6 +432,7 @@ class Hunted:
                         .format(self.name))
 
     def play_card(self, verbose=False):
+        """In phase 2, play a place card face down"""
         if not self.phand and verbose:
             logger.warning('Game {}: {} tried to play a card but had no cards in hand'
                            .format(self.game.game_number, self.name))
@@ -436,6 +444,7 @@ class Hunted:
                                                            card.name))
 
     def take_back(self, card, verbose=False):
+        """Take back a place card from discard pile to hand"""
         if not card and verbose:
             logger.info('{} had no cards to take back'.format(self.name))
         else:
@@ -444,15 +453,18 @@ class Hunted:
                 logger.info('{} takes back {}'.format(self.name, card.name))
 
     def take_from_reserve(self, card, verbose=False):
+        """Take a place card from reserve to hand using the Rover"""
         move(card, self.game.reserve, self.phand)
         if verbose:
             logger.info('{} takes {} from the reserve'.format(self.name,
                                                               card.name))
 
     def discard_pcard(self, card):
+        """Discard a place card"""
         move(card, self.phand, self.discard)
 
     def draw_survival(self):
+        """Draw a survival card, using the Shelter or the Source"""
         try:
             card = random.choice(self.game.survival_deck)
             move(card, self.game.survival_deck, self.shand)
@@ -460,16 +472,20 @@ class Hunted:
             logger.warning('Tried to draw a survival card when none were left')
 
     def return_card_to_hand(self, card, verbose=False):
+        """Returns place card from played zone to hand"""
         move(card, self.played, self.phand)
         if verbose:
             logger.info('{} returned {} to their hand.'.format(self.name,
                                                                card.name))
 
     def reveal_pcard(self, card, verbose=False):
+        """Reveals place card to the Creature."""
+        # currently unused, may be used later for some CreatureMind
         if verbose:
             logger.info('{} revealed {} from their hand').format(self.name, card.name)
 
     def proc(self, cardname, verbose=False):
+        """Takes a place card name as string and triggers the effect of the place card"""
         def lair():
             if self.mind.lair_choose_takeback():
                 for card in self.discard:
@@ -611,9 +627,10 @@ class Creature:
         self.game = game
         self.tracking_turn = False
         if not mind:
-            self.mind = RandomMind(self)
+            self.mind = RandomCreatureMind(self)
 
     def place_token(self, token, verbose=False):
+        """Put a creature or artemia token on a place card"""
         chosen_place_name = self.mind.choose_place_name_to_put_token()
         for place_card in self.game.board:
             if place_card.name == chosen_place_name:
@@ -625,6 +642,7 @@ class Creature:
                 break
 
     def draw_hunt_card(self, number_of_cards=1):
+        """Takes an optional integer and draws a hunt card or x hunt cards"""
         for i in range(number_of_cards):
             card = random.choice(self.game.hunt_deck)
             move(card, self.game.hunt_deck, self.hhand)
@@ -762,7 +780,6 @@ class HuntCard:
         self.artemia = artemia
 
 
-
 class RandomHuntedMind:
     """A mostly random decision-making process for a Hunted player"""
 
@@ -770,12 +787,15 @@ class RandomHuntedMind:
         self.player = player
 
     def choose_card_to_play(self):
+        """Returns a random card from the Hunted's hand"""
         return random.choice(self.player.phand)
 
     def choose_take_back(self):
+        """Returns a random card from Hunted's discard or None if discard is empty"""
         return random.choice(self.player.discard) if self.player.discard else None
 
     def decide_if_give_up(self):
+        """Returns True if conditions are met and Hunted will give up else False"""
         if self.player.will == 1 and len(self.player.phand) < 3:
             return True
         elif self.player.will == 1 and len(self.player.phand) < 2 and self.player.game.creature_spaces_to_win < 4:
@@ -784,6 +804,7 @@ class RandomHuntedMind:
             return False
 
     def decide_if_resist(self):
+        """Returns 1 if conditions are met else False"""
         if len(self.player.phand) < 2:
             return 1
         elif (self.player.river_turn or self.player.artefact_turn) and len(self.player.phand) < 3:
@@ -792,12 +813,15 @@ class RandomHuntedMind:
             return False
 
     def card_to_take_back(self):
+        """Returns a random card from Hunted's discard"""
         return random.choice(self.player.discard)
 
     def lair_choose_takeback(self):
+        """Returns True if Hunted chooses to take back place cards when proccing the Lair"""
         return True if len(self.player.discard) > 2 else False
 
     def choose_card_from_reserve(self):
+        """Returns a random place card from the reserve that can be taken"""
         reserve = self.player.game.reserve
         current_cards = {card.name for card in self.player.phand + self.player.played + self.player.discard}
         candidates = [card for card in reserve if card.name not in current_cards]
@@ -806,6 +830,7 @@ class RandomHuntedMind:
         return random.choice(candidates)
 
     def choose_survival_card_at_shelter(self, cards):
+        """Returns"""
         if random.randint(0, 1) > 0:
             return cards[0], cards[1]
         else:
@@ -828,6 +853,7 @@ class RandomHuntedMind:
 
     def choose_card_to_reveal(self):  # for phobia
         return random.choice(self.player.phand)
+
 
 class RandomCreatureMind:
     """A mostly random decision-making process for a Creature player"""
@@ -925,6 +951,7 @@ class BetterHuntedMind(RandomHuntedMind):
     def choose_card_to_reveal(self):  # for phobia
         return random.choice(self.player.phand)
 
+
 class BetterCreatureMind(RandomCreatureMind):
     """A better decision-making process for a Creature player"""
 
@@ -953,6 +980,7 @@ class BetterCreatureMind(RandomCreatureMind):
                       self.player.game.hunted
                       if len(hunted.phand) > 2]
         return random.choice(candidates)
+
 
 if __name__ == "main":
     # instantiate hunt, survival, place cards from csv files
@@ -986,5 +1014,3 @@ if __name__ == "main":
     for i in range(int(no_of_games)):
         game = Game(no_of_players)
         game.play(verbose=True)
-
-
