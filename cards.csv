@@ -1,46 +1,46 @@
-﻿TYPE,CARDNAME,TEXT,PHASE,ARTEMIA,TARGET,NUMBER
-Hunt,Forbidden Zone,All Hunted discard 1 Place card simultaneously.,2,N,N,
-Hunt,Phobia,Force one Hunted to show you all but 2 Place cards from his hand.,2,Y,N,
-Hunt,Ascendancy,Force one Hunted to discard all but 2 Place cards from his hand.,2,N,N,
-Hunt,Scream,Each Hunted on the targeted place must discard 2 Place cards or lose 1 Will.,2,N,Y,
-Hunt,Force Field,"Before the Hunted play, target 2 adjacent places. Neither may played this turn.",1,N,Y,
-Hunt,Toxin,Each Hunted on the targeted place discards 1 Survival card. The power of the place is ineffective.,2,N,Y,
-Hunt,Mutation,"In addition to its effects, the Artemia token inflicts the loss of 1 Will.",2,Y,N,
-Hunt,Virus,Target 2 adjacent places. Apply the effects of the Artemia token on both places.,2,Y,N,
-Hunt,Persecution,Each Hunted may only take back 1 Place card when using the power of a Place card.,2,N,N,
-Hunt,Anticipation,"Choose one Hunted. If you catch him with the Creature token, move the Assimilation counter forward 1 extra space.",2,N,N,
-Hunt,Interference,The powers of the Beach and the Wreck are ineffective.,2,N,N,
-Hunt,Flashback,Copy the last Hunt card you discarded.,,N,N,
-Hunt,Detour,"After the Hunted reveal their Place cards, move one Hunted to an adjacent place.",3,N,N,
-Hunt,Stasis,Prevent the Rescue counter moving forward during this phase.,4,N,N,
-Hunt,Despair,No Survival cards may be played or drawn for the remainder of the turn.,1,Y,N,
-Hunt,Tracking,"Next turn, you may play up to 2 Hunt cards.",4,N,N,
-Hunt,Fierceness,Hunted caught by the Creature token lose 1 extra Will.,2,N,N,
-Hunt,Mirage,Target 2 adjacent places. Both are ineffective.,,N,Y,
-Hunt,Cataclysm,The place's power of your choice is ineffective.,3,N,N,
-Hunt,Clone,Consider the Target token as a second Creature token.,2,N,Y,
-Survival,Double Back,Take back the Place card you just played.,4,,,
-Survival,Dodge,Avoid the effects of the Creature token.,3,,,
-Survival,Gate,"Instead of using the power fo your Place card, copy the power of an adjacent place.",3,,,
-Survival,Drone,"Instead of using the power of your Place card, copy the power of the Rover.",3,,,
-Survival,Amplifier,Remove the Marker counter from the Beach to immediately remove the Rescue counter forward 1 space.,4,,,
-Survival,Vortex,Swap your played Place card for one Place card from your discard pile.,2,,,
-Survival,Sixth Sense,Take back to your hand 2 Place cards from your discard pile.,1,,,
-Survival,Adrenaline,Regain 1 Will.,1,,,
-Survival,Detector,Avoid the effects of the Artemia token.,3,,,
-Survival,Strike Back,Take 2 random Hunt cards from the Creature's hand and put them at the bottom of the Hunt deck.,1,,,
-Survival,Smokescreen,All the Hunted hide their discarded Place cards until the end of the turn.,1,,,
-Survival,Ingenuity,Place the Marker counter on the Beach.,1,,,
-Survival,Sacrifice,Discard 1 Place card. No Hunt card may be played this turn.,1,,,
-Survival,Hologram,Move the Artemia token to an adjacent place.,3,,,
-Survival,Wrong Track,Move the Creature token to an adjacent place.,3,,,
-Place,The Lair,Take back to your hand the Place cards from your discard pile OR copy the power of the place with the Creature token. Lose 1 extra Will if caught by the Creature token.,,,,1
-Place,The Jungle,Take back to your hand this Place card and 1 Place card from your discard pile.,,,,2
-Place,The River,"Next turn, play 2 Place cards. Before revealing, choose one and return the second to your hand.",,,,3
-Place,The Beach,Place the Marker counter on the Beach OR remove it to move the Rescue counter forward 1 space. (max 1x/turn),,,,4
-Place,The Rover,Take from the reserve 1 Place card you do not own and add it to your hand.,,,,5
-Place,The Swamp,Take back to your hand this Place card and 2 Place cards from your discard pile.,,,,6
-Place,The Shelter,"Draw 2 Survival cards, choose one and discard the second.",,,,7
-Place,The Wreck,Move the Rescue counter forward 1 space. (max 1x/turn),,,,8
-Place,The Source,The Hunted of your choice (you or another player) regains 1 Will OR you draw 1 Survival card.,,,,9
-Place,The Artefact,"Next turn, play 2 Place cards. Resolve both places. You may not copy the Artefact.",,,,10
+TYPE,CARDNAME,TEXT,ADJACENT,PHASE,ARTEMIA,TARGET,NUMBER
+Hunt,Forbidden Zone,All Hunted discard 1 Place card simultaneously.,,2,N,N,
+Hunt,Phobia,Force one Hunted to show you all but 2 Place cards from his hand.,,2,Y,N,
+Hunt,Ascendancy,Force one Hunted to discard all but 2 Place cards from his hand.,,2,N,N,
+Hunt,Scream,Each Hunted on the targeted place must discard 2 Place cards or lose 1 Will.,,2,N,Y,
+Hunt,Force Field,"Before the Hunted play, target 2 adjacent places. Neither may played this turn.",,1,N,Y,
+Hunt,Toxin,Each Hunted on the targeted place discards 1 Survival card. The power of the place is ineffective.,,2,N,Y,
+Hunt,Mutation,"In addition to its effects, the Artemia token inflicts the loss of 1 Will.",,2,Y,N,
+Hunt,Virus,Target 2 adjacent places. Apply the effects of the Artemia token on both places.,,2,Y,N,
+Hunt,Persecution,Each Hunted may only take back 1 Place card when using the power of a Place card.,,2,N,N,
+Hunt,Anticipation,"Choose one Hunted. If you catch him with the Creature token, move the Assimilation counter forward 1 extra space.",,2,N,N,
+Hunt,Interference,The powers of the Beach and the Wreck are ineffective.,,2,N,N,
+Hunt,Flashback,Copy the last Hunt card you discarded.,,,N,N,
+Hunt,Detour,"After the Hunted reveal their Place cards, move one Hunted to an adjacent place.",,3,N,N,
+Hunt,Stasis,Prevent the Rescue counter moving forward during this phase.,,4,N,N,
+Hunt,Despair,No Survival cards may be played or drawn for the remainder of the turn.,,1,Y,N,
+Hunt,Tracking,"Next turn, you may play up to 2 Hunt cards.",,4,N,N,
+Hunt,Fierceness,Hunted caught by the Creature token lose 1 extra Will.,,2,N,N,
+Hunt,Mirage,Target 2 adjacent places. Both are ineffective.,,,N,Y,
+Hunt,Cataclysm,The place's power of your choice is ineffective.,,3,N,N,
+Hunt,Clone,Consider the Target token as a second Creature token.,,2,N,Y,
+Survival,Double Back,Take back the Place card you just played.,,4,,,
+Survival,Dodge,Avoid the effects of the Creature token.,,3,,,
+Survival,Gate,"Instead of using the power of your Place card, copy the power of an adjacent place.",,3,,,
+Survival,Drone,"Instead of using the power of your Place card, copy the power of the Rover.",,3,,,
+Survival,Amplifier,Remove the Marker counter from the Beach to immediately remove the Rescue counter forward 1 space.,,4,,,
+Survival,Vortex,Swap your played Place card for one Place card from your discard pile.,,2,,,
+Survival,Sixth Sense,Take back to your hand 2 Place cards from your discard pile.,,1,,,
+Survival,Adrenaline,Regain 1 Will.,,1,,,
+Survival,Detector,Avoid the effects of the Artemia token.,,3,,,
+Survival,Strike Back,Take 2 random Hunt cards from the Creature's hand and put them at the bottom of the Hunt deck.,,1,,,
+Survival,Smokescreen,All the Hunted hide their discarded Place cards until the end of the turn.,,1,,,
+Survival,Ingenuity,Place the Marker counter on the Beach.,,1,,,
+Survival,Sacrifice,Discard 1 Place card. No Hunt card may be played this turn.,,1,,,
+Survival,Hologram,Move the Artemia token to an adjacent place.,,3,,,
+Survival,Wrong Track,Move the Creature token to an adjacent place.,,3,,,
+Place,The Lair,Take back to your hand the Place cards from your discard pile OR copy the power of the place with the Creature token. Lose 1 extra Will if caught by the Creature token.,"The Jungle,The Swamp",,,,1
+Place,The Jungle,Take back to your hand this Place card and 1 Place card from your discard pile.,"The Lair,The River,The Shelter",,,,2
+Place,The River,"Next turn, play 2 Place cards. Before revealing, choose one and return the second to your hand.","The Jungle,The Beach,The Wreck",,,,3
+Place,The Beach,Place the Marker counter on the Beach OR remove it to move the Rescue counter forward 1 space. (max 1x/turn),"The River,The Rover,The Source",,,,4
+Place,The Rover,Take from the reserve 1 Place card you do not own and add it to your hand.,"The Beach,The Artefact",,,,5
+Place,The Swamp,Take back to your hand this Place card and 2 Place cards from your discard pile.,"The Lair,The Shelter",,,,6
+Place,The Shelter,"Draw 2 Survival cards, choose one and discard the second.","The Swamp,The Jungle,The Wreck",,,,7
+Place,The Wreck,Move the Rescue counter forward 1 space. (max 1x/turn),"The Shelter,The River,The Source",,,,8
+Place,The Source,The Hunted of your choice (you or another player) regains 1 Will OR you draw 1 Survival card.,"The Wreck,The Beach,The Artefact",,,,9
+Place,The Artefact,"Next turn, play 2 Place cards. Resolve both places. You may not copy the Artefact.","The Source,The Artefact",,,,10

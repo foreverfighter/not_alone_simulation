@@ -10,6 +10,7 @@
 # Add simple correlation place procs and win, and huntsurv card proc and win
 # Plan and finish the slides
 # For different minds, add docstring on reason for behavior
+# Every decision made and every game action adds to the game timer.
 
 """This script runs simulations of the board game Not Alone
 and logs the game stats in a "games.csv" for analysis.
@@ -209,6 +210,18 @@ class Game:
                                     's' if self.hunted_spaces_to_win != 1 else ''))
                 logger.info('Phase 1')
 
+            # creature decides what hunt card to play this round.
+            # creature can normally only play 1 hunt card, unless tracking was played
+            if self.creature.tracking_turn:
+                self.creature.choose_cards_to_play_this_turn(2)
+            else:
+                self.creature.choose_cards_to_play_this_turn()
+
+            # check for any phase 1 creature hunt card to be played
+            for hunt_card in self.creature.hunt_cards_to_play:
+                if int(hunt_card.phase) == 1:
+                    self.creature.play_hunt_card(hunt_card)
+
             # hunted decide if they give up, then resist, then they play a card
             for hunted in self.hunted:
                 if hunted.mind.decide_if_give_up():
@@ -238,6 +251,11 @@ class Game:
             if verbose:
                 logger.info('Phase 2')
 
+            # check for any phase 2 creature hunt card to be played
+            for hunt_card in self.creature.hunt_cards_to_play:
+                if int(hunt_card.phase) == 2:
+                    self.creature.play_hunt_card(hunt_card)
+
             self.creature.place_token(self.c_token, verbose=verbose)
 
             # Creature places the artemia token if the Hunted are a certain number of spaces from victory, or if the Creature played a Hunt card with an artemia icon
@@ -263,23 +281,41 @@ class Game:
             if verbose:
                 logger.info('Phase 3')
 
+            # check for any phase 3 creature hunt card to be played
+            for hunt_card in self.creature.hunt_cards_to_play:
+                if int(hunt_card.phase) == 3:
+                    self.creature.play_hunt_card(hunt_card)
+
             # for every place card played by every hunted player, check that it's not blocked by a token, and then proc the place card.
             for hunted in self.hunted:
                 for played in hunted.played:
                     if played.name == self.c_token.place.name:
                         self.counter['creature catch'] += 1
                         if played.name == 'The Lair':
-                            self.counter['lair catch'] += 1
-                            hunted.will -= 2
-                            if verbose:
-                                logger.info('{} was caught by the Creature at'
-                                            ' The Lair and lost 2 will'
-                                            .format(hunted.name))
+                            if 'Fierceness' in self.hunt_card_played:
+                                self.counter['lair catch'] += 1
+                                hunted.will -= 3
+                                if verbose:
+                                    logger.info('{} was caught by the Creature at The Lair with Fierceness active and lost 3 will'
+                                                .format(hunted.name))
+                            else:
+                                self.counter['lair catch'] += 1
+                                hunted.will -= 2
+                                if verbose:
+                                    logger.info('{} was caught by the Creature at'
+                                                ' The Lair and lost 2 will'
+                                                .format(hunted.name))
                         else:
-                            hunted.will -= 1
-                            logger.info('{} was caught by the Creature at {} '
-                                        'and lost 1 will'
-                                        .format(hunted.name, played.name))
+                            if 'Fierceness' in self.hunt_card_played:
+                                hunted.will -= 2
+                                if verbose:
+                                    logger.info('{} was caught by the Creature with Fierceness active and lost 3 will'
+                                                .format(hunted.name))
+                            else:
+                                hunted.will -= 1
+                                logger.info('{} was caught by the Creature at {} '
+                                            'and lost 1 will'
+                                            .format(hunted.name, played.name))
                         if caught_at_least_one == False:
                             self.counter['advances from catch'] += 1
                             self.creature_spaces_to_win -= 1
@@ -297,7 +333,16 @@ class Game:
                                 logger.info('{} visited {} but it had the '
                                             'Artemia token on it, so they discarded a card'
                                             .format(hunted.name, played.name))
+                        if 'Mutation' in self.hunt_card_played:
+                            pass
                     elif played.name == self.t_token.place.name:
+                        if 'Scream' in self.hunt_card_played:
+                            pass
+                        if 'Toxin' in self.hunt_card_played:
+                            pass
+                        if 'Virus' in self.hunt_card_played:
+                            pass
+
                         pass  # to insert code here for target token effects
                     else:
                         hunted.proc(played.name, verbose=verbose)
@@ -312,10 +357,18 @@ class Game:
             # PHASE 4
             if verbose:
                 logger.info('Phase 4')
-                logger.info('The Hunted are now one step closer to escape')
-            self.hunted_spaces_to_win -= 1
-            if self.game_over():
-                break
+
+            # check for any phase 4 creature hunt card to be played
+            for hunt_card in self.creature.hunt_cards_to_play:
+                if int(hunt_card.phase) == 4:
+                    self.creature.play_hunt_card(hunt_card)
+
+            if 'Stasis' not in self.hunt_card_played:
+                if verbose:
+                    logger.info('The Hunted are now one step closer to escape')
+                self.hunted_spaces_to_win -= 1
+                if self.game_over():
+                    break
 
             # move played cards into discard piles
             for hunted in self.hunted:
@@ -509,6 +562,10 @@ class Hunted:
             self.river_turn = True
 
         def beach():
+            if 'Interference' in self.game.hunt_card_played:
+                if verbose:
+                    logger.info('{} visited the Beach but it was ineffective as the Creature played Interference'.format(self.name))
+                return None
             if not self.game.beach_proced_in_turn:
                 self.game.beach_proced_in_turn = True
                 if self.game.beach_marker_on:
@@ -569,6 +626,10 @@ class Hunted:
                     logger.warning('{} visited the Shelter but there were not enough cards in the survival deck even after shuffling in the discard'.format(self.name))
 
         def wreck():
+            if 'Interference' in self.game.hunt_card_played:
+                if verbose:
+                    logger.info('{} visited the Wreck but it was ineffective as the Creature played Interference'.format(self.name))
+                return None
             if not self.game.wreck_proced_in_turn:
                 self.game.wreck_proced_in_turn = True
                 self.game.hunted_spaces_to_win -= 1
@@ -626,6 +687,7 @@ class Creature:
         self.hdiscard = []
         self.game = game
         self.tracking_turn = False
+        self.hunt_cards_to_play = []
         if not mind:
             self.mind = RandomCreatureMind(self)
 
@@ -649,6 +711,7 @@ class Creature:
 
     def play_hunt_card(self, card, verbose=False):
         def forbidden_zone():
+            # All Hunted discard 1 Place card simultaneously.
             for hunted in self.game.hunted:
                 try:
                     hunted.discard_pcard(hunted.mind.choose_card_to_discard())
@@ -656,69 +719,88 @@ class Creature:
                     pass
 
         def phobia():
+            # Force one Hunted to show you all but 2 Place cards from his hand.
             self.game.hunt_card_artemia = True
             target = self.mind.choose_player_for_phobia()
             for i in range(len(target.phand) - 2):
                 target.reveal_pcard(target.mind.choose_card_to_reveal())
-                # to add a way for creature to decide to hunt this player, and exclude the revealed cards
+                # to add a way for creature to decide to hunt aim for this player, and exclude the revealed cards
 
         def ascendancy():
+            # Force one Hunted to discard all but 2 Place cards from his hand.
             target = self.mind.choose_player_for_ascendancy()
             for i in range(len(target.phand) - 2):
                 target.discard_pcard(target.mind.choose_card_to_discard())
 
         def scream():
+            # Each Hunted on the targeted place must discard 2 Place cards or lose 1 Will.
             self.game.hunt_card_target = True
 
         def force_field():
+            # Before the Hunted play, target 2 adjacent places. Neither may played this turn.
             # there is only one target token. i should create new invisible spots in between places and create a new method for targeting two adjacent places
             if verbose:
                 pass
 
         def toxin():
+            # Each Hunted on the targeted place discards 1 Survival card. The power of the place is ineffective.
             self.game.hunt_card_target = True
 
         def mutation():
+            # In addition to its effects, the Artemia token inflicts the loss of 1 Will.
             self.game.hunt_card_artemia = True
 
         def virus():
+            # Target 2 adjacent places. Apply the effects of the Artemia token on both places.
             # there is only one artemia token. i should create new invisible spots in between places and create a new method for placing on two adjacent places
             pass
 
         def persecution():
+            # Each Hunted may only take back 1 Place card when using the power of a Place card.
             pass
 
         def anticipation():
+            # Choose one Hunted. If you catch him with the Creature token, move the Assimilation counter forward 1 extra space.
             self.game.anticipation_target = self.mind.choose_player_for_anticipation()
 
         def interference():
+            # The powers of the Beach and the Wreck are ineffective.
             pass
 
         def flashback():
+            # Copy the last Hunt card you discarded.
             pass  # to code this
 
         def detour():
+            # After the Hunted reveal their Place cards, move one Hunted to an adjacent place.
             pass  # to code this, move to adjacent place
 
         def stasis():
+            # Prevent the Rescue counter moving forward during this phase.
             pass
 
         def despair():
+            # No Survival cards may be played or drawn for the remainder of the turn.
             self.game.hunt_card_artemia = True
 
         def tracking():
+            # Next turn, you may play up to 2 Hunt cards.
             self.tracking_turn = True
 
         def fierceness():
+            # Hunted caught by the Creature token lose 1 extra Will.
             pass
 
         def mirage():
+            # Target 2 adjacent places. Both are ineffective.
             pass  # same as force field
 
         def cataclysm():
+            # The place's power of your choice is ineffective.
             pass
 
         def clone():
+            # Consider the Target token as a second Creature token.
             self.game.hunt_card_target = True
 
         switcher = {
@@ -746,16 +828,20 @@ class Creature:
         # Get the function from switcher dictionary
         func = switcher.get(card.name)
         func()
-        move(card, self.hhand, self.game.hunt_card_played)  # this may be placed separately
+        self.hunt_card_played.append(card.name)
+        move(card, self.hhand, self.hdiscard)  # this may be placed separately
 
 
 class PlaceCard:
     """A Place card, either on the board or in a Hunted's phand."""
 
-    def __init__(self, name, text, number):
+    def __init__(self, name, text, number, adjacent):
         self.name = name
         self.text = text
         self.number = number
+        self.adjacent = []
+        for adj_place in adjacent.split(','):
+            self.adjacent.append(adj_place)
 
     def __repr__(self):
         return self.name
@@ -881,6 +967,14 @@ class RandomCreatureMind:
                     place_option.append(card.name)
         return random.choice(place_option)
 
+    def choose_cards_to_play_this_turn(self, number=1):
+        """Adds one or two(if Tracking is active) hunt card names to the
+        Creature's hunt_cards_to_play attribute"""
+        try:
+            self.hunt_cards_to_play = random.sample(self.player.hhandd, number)
+        except ValueError:
+            logger.error('Game {}: {} tried to sample {} hunt cards from his hand but only had {} card'.format(self.player.game.game_number, self.player.name, number, len(self.player.hhand)))
+
     def choose_player_for_phobia(self):
         """Returns a random candidate for using the Phobia hunt card"""
         candidates = [hunted for hunted in
@@ -899,117 +993,9 @@ class RandomCreatureMind:
 class BetterHuntedMind(RandomHuntedMind):
     """A better decision-making process for a Hunted player"""
 
-    def __init__(self, player):
-        self.player = player
-
-    def choose_card_to_play(self):
-        """Returns a random card from the Hunted's hand"""
-        return random.choice(self.player.phand)
-
-    def choose_take_back(self):
-        """Returns a random card from Hunted's discard or None if discard is empty"""
-        return random.choice(self.player.discard) if self.player.discard else None
-
-    def decide_if_give_up(self):
-        """Returns True if conditions are met and Hunted will give up else False"""
-        if self.player.will == 1 and len(self.player.phand) < 3:
-            return True
-        elif self.player.will == 1 and len(self.player.phand) < 2 and self.player.game.creature_spaces_to_win < 4:
-            return True
-        else:
-            return False
-
-    def decide_if_resist(self):
-        """Returns 1 if conditions are met else False"""
-        if len(self.player.phand) < 2:
-            return 1
-        elif (self.player.river_turn or self.player.artefact_turn) and len(self.player.phand) < 3:
-            return 1
-        else:
-            return False
-
-    def card_to_take_back(self):
-        """Returns a random card from Hunted's discard"""
-        return random.choice(self.player.discard)
-
-    def lair_choose_takeback(self):
-        """Returns True if Hunted chooses to take back place cards when proccing the Lair"""
-        return True if len(self.player.discard) > 2 else False
-
-    def choose_card_from_reserve(self):
-        """Returns a random place card from the reserve that can be taken"""
-        reserve = self.player.game.reserve
-        current_cards = {card.name for card in self.player.phand + self.player.played + self.player.discard}
-        candidates = [card for card in reserve if card.name not in current_cards]
-        if not candidates:
-            return None
-        return random.choice(candidates)
-
-    def choose_survival_card_at_shelter(self, cards):
-        """Takes an iterable of two cards and returns a tuple of them in random order"""
-        if random.randint(0, 1) > 0:
-            return cards[0], cards[1]
-        else:
-            return cards[1], cards[0]
-
-    def choose_card_to_return(self):
-        """Returns a random card in Hunted's played zone"""
-        return random.choice(self.player.played)
-
-    def source_choose_will(self):
-        """Decide whether or not to take will when proccing the Source"""
-        if not self.player.game.survival_deck and not self.player.game.survival_discard:
-            return True
-        else:
-            return random.choice([True, False])
-
-    def player_to_gain_will(self):
-        """Decide which player to gain will when proccing the Source"""
-        return random.choice(self.player.game.hunted)
-
-    def choose_card_to_discard(self):
-        """Returns a random place card from Hunted's hand"""
-        return random.choice(self.player.phand)
-
-    def choose_card_to_reveal(self):  # for phobia
-        """Returns a random place card from Hunted's hand"""
-        return random.choice(self.player.phand)
-
 
 class BetterCreatureMind(RandomCreatureMind):
     """A better decision-making process for a Creature player"""
-
-    def __init__(self, player):
-        self.player = player
-
-    def choose_place_name_to_put_token(self):
-        """Returns a random place to place a token on.
-
-        Creature decides the candidates based on what cards are in
-        the Hunteds' hands+played, which is public info"""
-        place_option = []
-        for hunted in self.player.game.hunted:
-            for card in hunted.played:
-                if card.name not in place_option:
-                    place_option.append(card.name)
-            for card in hunted.phand:
-                if card.name not in place_option:
-                    place_option.append(card.name)
-        return random.choice(place_option)
-
-    def choose_player_for_phobia(self):
-        """Returns a random candidate for using the Phobia hunt card"""
-        candidates = [hunted for hunted in
-                      self.player.game.hunted
-                      if len(hunted.phand) > 2]
-        return random.choice(candidates)
-
-    def choose_player_for_ascendancy(self):
-        """Returns a random candidate for using the Ascendancy hunt card"""
-        candidates = [hunted for hunted in
-                      self.player.game.hunted
-                      if len(hunted.phand) > 2]
-        return random.choice(candidates)
 
 
 if __name__ == "main":
@@ -1032,7 +1018,8 @@ if __name__ == "main":
             else:
                 place_cards[row['CARDNAME']] = PlaceCard(row['CARDNAME'],
                                                          row['TEXT'],
-                                                         row['NUMBER'])
+                                                         row['NUMBER'],
+                                                         row['ADJACENT'])
 
     no_of_players = 0
     no_of_games = 0
