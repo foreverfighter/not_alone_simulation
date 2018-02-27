@@ -5,7 +5,7 @@
 #Add survival card effects
 #Add smarter methods for better minds
 #Add bokeh data viz win rates for different player counts, minds
-#Do simple pandas csv manip to calc win rates
+#Do simple pandas csv manip to calc win rates 
 #Add docstrings
 #Add simple correlation place procs and win, and huntsurv card proc and win
 #Plan and finish the slides
@@ -13,7 +13,7 @@
 #For different minds, add docstring on reason for behavior
 """This script runs simulations of the board game Not Alone
 and logs the game stats in a "games.csv" for analysis.
-Verbose game logs are saved in "games.log".
+Verbose game logs are saved in "games.log". 
 """
 
 import csv
