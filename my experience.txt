@@ -3,3 +3,13 @@ i noticed that my results file had abnormal figures, and games which had 20 turn
 how to win in not alone as the creature
 how to win in not alone as the hunted
 
+logging
+
+to log errors and warnings to the console and info to the file, set different levels for each handler
+
+# collections for Counter to count stats
+
+# csv for writing the results
+
+
+board game simulations - not alone
