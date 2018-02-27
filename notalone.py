@@ -830,28 +830,33 @@ class RandomHuntedMind:
         return random.choice(candidates)
 
     def choose_survival_card_at_shelter(self, cards):
-        """Returns"""
+        """Takes an iterable of two cards and returns a tuple of them in random order"""
         if random.randint(0, 1) > 0:
             return cards[0], cards[1]
         else:
             return cards[1], cards[0]
 
     def choose_card_to_return(self):
+        """Returns a random card in Hunted's played zone"""
         return random.choice(self.player.played)
 
     def source_choose_will(self):
+        """Decide whether or not to take will when proccing the Source"""
         if not self.player.game.survival_deck and not self.player.game.survival_discard:
             return True
         else:
             return random.choice([True, False])
 
     def player_to_gain_will(self):
+        """Decide which player to gain will when proccing the Source"""
         return random.choice(self.player.game.hunted)
 
     def choose_card_to_discard(self):
+        """Returns a random place card from Hunted's hand"""
         return random.choice(self.player.phand)
 
     def choose_card_to_reveal(self):  # for phobia
+        """Returns a random place card from Hunted's hand"""
         return random.choice(self.player.phand)
 
 
@@ -862,6 +867,10 @@ class RandomCreatureMind:
         self.player = player
 
     def choose_place_name_to_put_token(self):
+        """Returns a random place to place a token on.
+
+        Creature decides the candidates based on what cards are in
+        the Hunteds' hands+played, which is public info"""
         place_option = []
         for hunted in self.player.game.hunted:
             for card in hunted.played:
@@ -873,12 +882,14 @@ class RandomCreatureMind:
         return random.choice(place_option)
 
     def choose_player_for_phobia(self):
+        """Returns a random candidate for using the Phobia hunt card"""
         candidates = [hunted for hunted in
                       self.player.game.hunted
                       if len(hunted.phand) > 2]
         return random.choice(candidates)
 
     def choose_player_for_ascendancy(self):
+        """Returns a random candidate for using the Ascendancy hunt card"""
         candidates = [hunted for hunted in
                       self.player.game.hunted
                       if len(hunted.phand) > 2]
@@ -892,12 +903,15 @@ class BetterHuntedMind(RandomHuntedMind):
         self.player = player
 
     def choose_card_to_play(self):
+        """Returns a random card from the Hunted's hand"""
         return random.choice(self.player.phand)
 
     def choose_take_back(self):
+        """Returns a random card from Hunted's discard or None if discard is empty"""
         return random.choice(self.player.discard) if self.player.discard else None
 
     def decide_if_give_up(self):
+        """Returns True if conditions are met and Hunted will give up else False"""
         if self.player.will == 1 and len(self.player.phand) < 3:
             return True
         elif self.player.will == 1 and len(self.player.phand) < 2 and self.player.game.creature_spaces_to_win < 4:
@@ -906,6 +920,7 @@ class BetterHuntedMind(RandomHuntedMind):
             return False
 
     def decide_if_resist(self):
+        """Returns 1 if conditions are met else False"""
         if len(self.player.phand) < 2:
             return 1
         elif (self.player.river_turn or self.player.artefact_turn) and len(self.player.phand) < 3:
@@ -914,12 +929,15 @@ class BetterHuntedMind(RandomHuntedMind):
             return False
 
     def card_to_take_back(self):
+        """Returns a random card from Hunted's discard"""
         return random.choice(self.player.discard)
 
     def lair_choose_takeback(self):
+        """Returns True if Hunted chooses to take back place cards when proccing the Lair"""
         return True if len(self.player.discard) > 2 else False
 
     def choose_card_from_reserve(self):
+        """Returns a random place card from the reserve that can be taken"""
         reserve = self.player.game.reserve
         current_cards = {card.name for card in self.player.phand + self.player.played + self.player.discard}
         candidates = [card for card in reserve if card.name not in current_cards]
@@ -928,27 +946,33 @@ class BetterHuntedMind(RandomHuntedMind):
         return random.choice(candidates)
 
     def choose_survival_card_at_shelter(self, cards):
+        """Takes an iterable of two cards and returns a tuple of them in random order"""
         if random.randint(0, 1) > 0:
             return cards[0], cards[1]
         else:
             return cards[1], cards[0]
 
     def choose_card_to_return(self):
+        """Returns a random card in Hunted's played zone"""
         return random.choice(self.player.played)
 
     def source_choose_will(self):
+        """Decide whether or not to take will when proccing the Source"""
         if not self.player.game.survival_deck and not self.player.game.survival_discard:
             return True
         else:
             return random.choice([True, False])
 
     def player_to_gain_will(self):
+        """Decide which player to gain will when proccing the Source"""
         return random.choice(self.player.game.hunted)
 
     def choose_card_to_discard(self):
+        """Returns a random place card from Hunted's hand"""
         return random.choice(self.player.phand)
 
     def choose_card_to_reveal(self):  # for phobia
+        """Returns a random place card from Hunted's hand"""
         return random.choice(self.player.phand)
 
 
@@ -959,6 +983,10 @@ class BetterCreatureMind(RandomCreatureMind):
         self.player = player
 
     def choose_place_name_to_put_token(self):
+        """Returns a random place to place a token on.
+
+        Creature decides the candidates based on what cards are in
+        the Hunteds' hands+played, which is public info"""
         place_option = []
         for hunted in self.player.game.hunted:
             for card in hunted.played:
@@ -970,12 +998,14 @@ class BetterCreatureMind(RandomCreatureMind):
         return random.choice(place_option)
 
     def choose_player_for_phobia(self):
+        """Returns a random candidate for using the Phobia hunt card"""
         candidates = [hunted for hunted in
                       self.player.game.hunted
                       if len(hunted.phand) > 2]
         return random.choice(candidates)
 
     def choose_player_for_ascendancy(self):
+        """Returns a random candidate for using the Ascendancy hunt card"""
         candidates = [hunted for hunted in
                       self.player.game.hunted
                       if len(hunted.phand) > 2]
